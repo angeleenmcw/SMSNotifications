@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda with spring boot.
+
+Globals:
+  Api:
+    # API Gateway regional endpoints
+    EndpointConfiguration: REGIONAL
+
+Resources:
+  LambdaNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.sms.notifications.textmessages.handler.StreamLambdaHandler::handleRequest
+      Runtime: java8
+      CodeUri: target/textmessages-0.0.1-SNAPSHOT.jar
+      MemorySize: 1512
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Timeout: 60
+      Events:
+        GetResource:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: any
+
+  LambdaSQSQueueFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.sms.notifications.textmessages.handler.RequestLambdaHandler::handleRequest
+      Runtime: java8
+      CodeUri: target/textmessages-0.0.1-SNAPSHOT.jar
+      MemorySize: 1512
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AWSLambdaSQSQueueExecutionRole
+      Timeout: 60
+      Events:
+        LambdaSQSEvent:
+          Type: SQS
+          Properties:
+            Queue: arn:aws:sqs:us-east-1:098249680997:EventNotification
+            BatchSize: 10
+
+Outputs:
+  LambdaNotificationApi:
+    Description: URL for application
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/api/v1/messages'
+    Export:
+      Name: LambdaNotificationApi
