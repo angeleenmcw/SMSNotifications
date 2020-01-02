@@ -40,7 +40,7 @@ Resources:
         LambdaSQSEvent:
           Type: SQS
           Properties:
-            Queue: arn:aws:sqs:us-east-1:098249680997:EventNotification
+            Queue: ${queue url}
             BatchSize: 10
 
 Outputs:
